@@ -75,15 +75,21 @@ html, body {
 
 /* --- Tutorial callouts --- */
 
+/* Callouts are purely decorative: they float over the board without reserving
+   layout space and never take pointer events, so a tap always reaches the hex
+   underneath. Making them clickable meant they silently ate taps on the top
+   rows of the board. */
 #tutorial {
   position: absolute; left: 10px; right: 10px; top: 40px;
-  display: flex; flex-direction: column; gap: 8px; pointer-events: none;
+  display: flex; flex-direction: column; gap: 8px;
+  pointer-events: none;
   z-index: 3;
 }
+#tutorial * { pointer-events: none; }
 .callout {
   align-self: center;
   max-width: min(94%, 460px);
-  background: rgba(10, 40, 120, 0.9);
+  background: rgba(10, 40, 120, 0.86);
   border: 2px solid #4a7dff;
   border-radius: 14px;
   padding: 9px 13px;
@@ -184,6 +190,8 @@ button:disabled { opacity: 0.35; }
 
 /* --- Overlay / menus --- */
 
+/* The menu overlay is up from the very first paint and only comes down once the
+   game is ready, so the gameplay UI is never briefly visible on a slow load. */
 #overlay {
   position: fixed; inset: 0; z-index: 10;
   background: rgba(0, 6, 10, 0.93);
@@ -211,6 +219,16 @@ button:disabled { opacity: 0.35; }
 #overlay-actions button { padding: 10px 18px; }
 
 .hidden { display: none !important; }
+
+/* While booting, and on the main menu, there is no live game behind the overlay
+   -- only a stale HUD reading 0/0 -- so hide it and use a fully opaque backdrop.
+   The win/lose overlay deliberately does NOT do this: seeing your own board
+   faintly behind the result is part of the payoff. */
+body.booting #app,
+body.at-menu #app { visibility: hidden; }
+body.booting #overlay,
+body.at-menu #overlay { background: #00060a; }
+body.booting #overlay-title { animation: pulse 1.6s ease-in-out infinite; }
 
 /* Desktop gets a little more room and a hover affordance. */
 @media (min-width: 760px) and (min-height: 620px) {

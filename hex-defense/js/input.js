@@ -1,17 +1,19 @@
 // Pointer and keyboard input.
 //
 // The board never pans or zooms, so a tap maps straight to a hex and there is no
-// gesture ambiguity to resolve. On touch the placement ghost is offset above the
-// finger, because otherwise the fingertip covers the exact cell being chosen.
-
-const TOUCH_LIFT = 46;   // px the ghost sits above a touch point
+// gesture ambiguity to resolve.
+//
+// A tap resolves to the cell directly under the point, with no offset. This once
+// lifted touch points ~46px so the fingertip would not cover the target cell --
+// but a hex is about that tall, so every tap landed a full cell high. Feedback
+// for the cell under your finger comes from the ghost outline and its range
+// ring, both of which extend well past a fingertip.
 
 export class Input {
   constructor(canvas, game) {
     this.canvas = canvas;
     this.game = game;
     this.pointerDown = false;
-    this.isTouch = false;
     this.movedFar = false;
 
     canvas.addEventListener('pointerdown', this.onDown, { passive: false });
@@ -24,13 +26,11 @@ export class Input {
 
   localPoint(ev) {
     const rect = this.canvas.getBoundingClientRect();
-    const lift = this.isTouch ? TOUCH_LIFT : 0;
-    return { x: ev.clientX - rect.left, y: ev.clientY - rect.top - lift };
+    return { x: ev.clientX - rect.left, y: ev.clientY - rect.top };
   }
 
   onDown = (ev) => {
     ev.preventDefault();
-    this.isTouch = ev.pointerType !== 'mouse';
     this.pointerDown = true;
     this.movedFar = false;
     this.startX = ev.clientX; this.startY = ev.clientY;

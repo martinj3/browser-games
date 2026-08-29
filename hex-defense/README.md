@@ -119,6 +119,11 @@ node tools/simulate.mjs 4 -v    # one level, wave by wave
 node tools/smoke.mjs 0          # browser smoke test (needs a server on :8123)
 ```
 
+The smoke test runs on a phone profile with touch enabled and drives real taps
+through the DOM rather than calling the game API, because hit-testing is exactly
+the sort of thing an API-level test cannot see. It also holds back the Pixi
+bundle to check that nothing of the gameplay UI shows before the menu is ready.
+
 The balance harness plays each level with a scripted build order. It is a
 mediocre player — it does not really maze — so it clearing levels 1–3 and falling
 short late on 4 and 5 is roughly the intended difficulty shape.

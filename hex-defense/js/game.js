@@ -55,13 +55,12 @@ export class Game {
     this.renderer.resize(w, h);
     if (this.world) {
       // Leave room for the top HUD strip so the first row of hexes is never
-      // hidden behind the score readout, plus the exact height of a tutorial
-      // callout while one is actually on screen. Reserving the callout band for
-      // the whole level -- as this used to -- left a wide dead margin above the
-      // board long after the callout had gone.
-      const hudInset = Math.min(46, h * 0.06);
-      const calloutInset = this.hud ? this.hud.calloutHeight() : 0;
-      this.world.relayout(w, h, Math.max(6, w * 0.02), hudInset + calloutInset);
+      // hidden behind the score readout. Tutorial callouts deliberately do NOT
+      // reserve space: they float over the board and dismiss themselves. Giving
+      // them their own band made the whole board jump the moment one appeared
+      // or expired, which moved cells out from under the player's finger
+      // mid-placement.
+      this.world.relayout(w, h, Math.max(6, w * 0.02), Math.min(46, h * 0.06));
       this.renderer.drawBoard(this.world);
     }
   }
@@ -71,6 +70,7 @@ export class Game {
   showMenu() {
     this.mode = MODE.MENU;
     this.world = null;
+    document.body.classList.add('at-menu');
     this.hud.showOverlay({
       title: 'HEXSWARM',
       subtitle: 'Build a maze out of your own towers.<br>Longer path, more time to shoot — but you may never seal the exit.',
@@ -94,6 +94,7 @@ export class Game {
     this.armedTower = level.towers[0];
     this.accumulator = 0;
 
+    document.body.classList.remove('at-menu');
     this.renderer.clearLevel();
     this.hud.hideOverlay();
     this.hud.buildPalette(level);
@@ -273,7 +274,7 @@ export class Game {
     const showRoute = world.director.phase === PHASE.BUILD || this.paused;
     this.renderer.render(world, realDt, alpha, showRoute);
     this.hud.update(world, this);
-    if (this.hud.updateTutorial(world, this)) this.resize();
+    this.hud.updateTutorial(world, this);
     this.renderer.app.render();
 
     if (this.mode === MODE.PLAYING && world.result !== RESULT.PLAYING) this.finishLevel();
