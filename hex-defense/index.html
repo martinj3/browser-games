@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>HEXSWARM</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#00060a" />
+  <meta name="description" content="A neon hex-grid maze tower defense game." />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2300060a'/%3E%3Cpath d='M16 5l9 5.5v11L16 27l-9-5.5v-11z' fill='none' stroke='%235cffb0' stroke-width='2'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="style.css" />
+  <script type="importmap">
+    {
+      "imports": {
+        "pixi.js": "./js/vendor/pixi.mjs",
+        "pixi-filters": "./js/vendor/pixi-filters.mjs"
+      }
+    }
+  </script>
+</head>
+<body>
+  <div id="app">
+    <div id="stage-wrap">
+      <canvas id="game-canvas"></canvas>
+
+      <div id="hud-top">
+        <div id="score">0000000000</div>
+        <div id="combo">x1</div>
+        <div id="health"><span id="health-value">20</span> Health</div>
+        <div id="wave">0/0</div>
+      </div>
+
+      <div id="wave-banner" class="hidden"></div>
+
+      <div id="tutorial" class="hidden"></div>
+    </div>
+
+    <div id="dock">
+      <div id="dock-status">
+        <div id="cash">$0</div>
+        <div id="next-wave">
+          <button id="send-now" type="button">SEND NOW <span id="break-timer"></span></button>
+          <div id="incoming"></div>
+        </div>
+        <div id="dock-buttons">
+          <button id="speed-btn" type="button" title="Game speed">1&times;</button>
+          <button id="pause-btn" type="button" title="Pause">II</button>
+        </div>
+      </div>
+
+      <div id="palette"></div>
+
+      <div id="selection" class="hidden">
+        <canvas id="sel-icon" width="56" height="56"></canvas>
+        <div id="sel-text">
+          <div id="sel-name">—</div>
+          <div id="sel-stats">—</div>
+          <div id="sel-blurb">—</div>
+        </div>
+        <button id="upgrade-btn" type="button">
+          <span class="glyph">&#9650;</span><span id="upgrade-cost">$0</span>
+        </button>
+        <button id="sell-btn" type="button">
+          <span class="glyph">$</span><span id="sell-value">$0</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="overlay" class="hidden">
+    <div id="overlay-panel">
+      <h1 id="overlay-title">HEXSWARM</h1>
+      <p id="overlay-subtitle"></p>
+      <div id="level-list"></div>
+      <div id="overlay-actions"></div>
+    </div>
+  </div>
+
+  <script type="module" src="./js/main.js"></script>
+</body>
+</html>

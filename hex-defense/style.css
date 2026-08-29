@@ -1,0 +1,213 @@
+/* HEXSWARM -- neon arcade chrome. The HUD is DOM rather than canvas: crisper
+   text, free layout, and it stays outside the bloom filter automatically. */
+
+:root {
+  color-scheme: dark;
+  --neon: #5cffb0;
+  --neon-dim: #2f8f70;
+  --cyan: #39d7ff;
+  --danger: #ff3355;
+  --gold: #ffd23d;
+  --panel: rgba(2, 18, 22, 0.82);
+  --edge: rgba(92, 255, 176, 0.35);
+  --dock-h: clamp(132px, 21vh, 178px);
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  margin: 0; padding: 0; width: 100%; height: 100%;
+  background: #00060a;
+  color: #cdfff0;
+  font-family: "Courier New", ui-monospace, SFMono-Regular, monospace;
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+#app { position: fixed; inset: 0; display: flex; flex-direction: column; }
+
+#stage-wrap { position: relative; flex: 1 1 auto; min-height: 0; }
+#game-canvas { display: block; width: 100%; height: 100%; }
+
+/* --- Top HUD --- */
+
+#hud-top {
+  position: absolute; top: 0; left: 0; right: 0;
+  padding: max(6px, env(safe-area-inset-top)) 10px 6px;
+  display: flex; align-items: baseline; gap: 8px;
+  font-size: clamp(13px, 4vw, 20px);
+  letter-spacing: 0.06em;
+  text-shadow: 0 0 8px currentColor;
+  pointer-events: none;
+}
+#score { color: #bfffe6; flex: 0 0 auto; }
+#combo { color: var(--gold); flex: 1 1 auto; text-align: center; }
+#combo.hot { color: #fff; text-shadow: 0 0 14px var(--gold), 0 0 26px var(--gold); }
+#health { color: var(--neon); flex: 0 0 auto; }
+#health.low { color: var(--danger); animation: pulse 0.8s infinite; }
+#wave { color: #7fd8ff; flex: 0 0 auto; }
+
+@keyframes pulse { 50% { opacity: 0.45; } }
+
+#wave-banner {
+  position: absolute; top: 38%; left: 0; right: 0;
+  text-align: center; font-size: clamp(20px, 7vw, 40px);
+  color: #fff; letter-spacing: 0.2em;
+  text-shadow: 0 0 18px var(--cyan), 0 0 40px var(--cyan);
+  pointer-events: none;
+  animation: bannerIn 1.6s ease-out forwards;
+}
+@keyframes bannerIn {
+  0% { opacity: 0; transform: scale(0.8); }
+  18% { opacity: 1; transform: scale(1); }
+  75% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.08); }
+}
+
+/* --- Tutorial callouts --- */
+
+#tutorial {
+  position: absolute; left: 10px; right: 10px; top: 40px;
+  display: flex; flex-direction: column; gap: 8px; pointer-events: none;
+  z-index: 3;
+}
+.callout {
+  align-self: center;
+  max-width: min(94%, 460px);
+  background: rgba(10, 40, 120, 0.9);
+  border: 2px solid #4a7dff;
+  border-radius: 14px;
+  padding: 9px 13px;
+  color: #9fe4ff;
+  font-size: clamp(11px, 3.2vw, 14px);
+  line-height: 1.3;
+  box-shadow: 0 0 22px rgba(74, 125, 255, 0.55);
+  animation: calloutIn 0.35s ease-out;
+}
+@keyframes calloutIn { from { opacity: 0; transform: translateY(10px); } }
+
+/* --- Dock --- */
+
+#dock {
+  flex: 0 0 auto;
+  height: var(--dock-h);
+  padding: 4px 6px max(4px, env(safe-area-inset-bottom));
+  background: linear-gradient(180deg, rgba(0, 20, 26, 0.6), rgba(0, 8, 12, 0.95));
+  border-top: 1px solid var(--edge);
+  display: flex; flex-direction: column; gap: 4px;
+}
+
+#dock-status {
+  display: flex; align-items: center; gap: 8px;
+  height: 30px; font-size: clamp(12px, 3.6vw, 16px);
+}
+#cash { color: var(--gold); text-shadow: 0 0 10px currentColor; flex: 0 0 auto; }
+#next-wave { flex: 1 1 auto; display: flex; align-items: center; gap: 6px; min-width: 0; }
+#send-now { flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; }
+#incoming { display: flex; gap: 2px; align-items: center; flex: 0 0 auto; opacity: 0.9; }
+#incoming::before { content: 'NEXT'; font-size: 10px; color: var(--neon-dim); margin-right: 3px; }
+#incoming img { width: 20px; height: 20px; }
+#incoming .n { font-size: 11px; color: #8fd; margin-right: 4px; }
+#dock-buttons { display: flex; gap: 6px; }
+
+button {
+  font-family: inherit; font-size: inherit;
+  background: rgba(0, 40, 48, 0.7);
+  color: var(--neon);
+  border: 1.5px solid var(--edge);
+  border-radius: 9px;
+  padding: 5px 9px;
+  min-height: 30px;
+  cursor: pointer;
+  text-shadow: 0 0 8px currentColor;
+  transition: background 0.12s, transform 0.08s;
+}
+button:active { transform: scale(0.94); background: rgba(0, 80, 90, 0.85); }
+button:disabled { opacity: 0.35; }
+#send-now { white-space: nowrap; }
+#dock-buttons button { min-width: 42px; }
+
+/* --- Tower palette --- */
+
+#palette {
+  flex: 1 1 auto;
+  display: flex; align-items: center; justify-content: center;
+  gap: clamp(4px, 1.6vw, 12px);
+  min-height: 0;
+}
+.tower-btn {
+  position: relative;
+  display: flex; flex-direction: column; align-items: center; gap: 1px;
+  padding: 3px 4px;
+  background: none; border: 1.5px solid transparent; border-radius: 12px;
+  min-width: 48px; min-height: 48px;
+}
+.tower-btn canvas { width: clamp(30px, 9vw, 44px); height: clamp(30px, 9vw, 44px); }
+.tower-btn .price { font-size: clamp(10px, 3vw, 13px); color: var(--neon); }
+.tower-btn.armed { border-color: var(--neon); background: rgba(0, 70, 60, 0.55); }
+.tower-btn.poor .price { color: #7a5a5a; }
+.tower-btn.poor canvas { opacity: 0.4; }
+
+/* --- Selection bar --- */
+
+#selection {
+  flex: 1 1 auto;
+  display: flex; align-items: center; gap: 8px;
+  min-height: 0;
+  padding: 6px 8px;
+  background: rgba(1, 14, 18, 0.97);
+  border: 1.5px solid var(--edge);
+  border-radius: 12px;
+  box-shadow: 0 0 22px rgba(92, 255, 176, 0.18);
+}
+#sel-icon { width: 44px; height: 44px; flex: 0 0 auto; }
+#sel-text { flex: 1 1 auto; min-width: 0; font-size: clamp(11px, 3.2vw, 14px); line-height: 1.3; }
+#sel-name { color: #fff; }
+#sel-stats { color: var(--cyan); }
+#sel-blurb { color: #6fa89a; font-size: 0.85em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#selection button {
+  display: flex; flex-direction: column; align-items: center; gap: 0;
+  min-width: 56px; padding: 4px 6px;
+}
+#selection .glyph { font-size: 1.25em; line-height: 1.1; }
+#sell-btn { color: var(--gold); border-color: rgba(255, 210, 61, 0.45); }
+
+/* --- Overlay / menus --- */
+
+#overlay {
+  position: fixed; inset: 0; z-index: 10;
+  background: rgba(0, 6, 10, 0.93);
+  display: flex; align-items: center; justify-content: center;
+  padding: 16px; overflow-y: auto;
+}
+#overlay-panel { width: min(520px, 100%); text-align: center; }
+#overlay h1 {
+  margin: 0 0 4px; font-size: clamp(28px, 10vw, 54px); letter-spacing: 0.22em;
+  color: #fff; text-shadow: 0 0 16px var(--neon), 0 0 44px var(--neon);
+}
+#overlay-subtitle { margin: 0 0 18px; color: #6fa89a; font-size: clamp(12px, 3.6vw, 15px); line-height: 1.5; }
+#level-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+.level-btn {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; text-align: left; padding: 11px 13px;
+  background: rgba(0, 30, 36, 0.7);
+}
+.level-btn .idx { color: var(--cyan); min-width: 22px; }
+.level-btn .nm { flex: 1 1 auto; color: #fff; }
+.level-btn .stars { color: var(--gold); letter-spacing: 2px; }
+.level-btn .best { color: #6fa89a; font-size: 0.8em; }
+.level-btn.locked { opacity: 0.35; }
+#overlay-actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+#overlay-actions button { padding: 10px 18px; }
+
+.hidden { display: none !important; }
+
+/* Desktop gets a little more room and a hover affordance. */
+@media (min-width: 760px) and (min-height: 620px) {
+  :root { --dock-h: 150px; }
+  button:hover:not(:disabled) { background: rgba(0, 80, 90, 0.7); }
+  #app { max-width: 620px; margin: 0 auto; border-left: 1px solid rgba(92,255,176,0.12); border-right: 1px solid rgba(92,255,176,0.12); }
+}
