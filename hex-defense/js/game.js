@@ -55,10 +55,12 @@ export class Game {
     this.renderer.resize(w, h);
     if (this.world) {
       // Leave room for the top HUD strip so the first row of hexes is never
-      // hidden behind the score readout -- plus the tutorial callout band on
-      // levels that have one, so a callout can never cover the spawn portal.
+      // hidden behind the score readout, plus the exact height of a tutorial
+      // callout while one is actually on screen. Reserving the callout band for
+      // the whole level -- as this used to -- left a wide dead margin above the
+      // board long after the callout had gone.
       const hudInset = Math.min(46, h * 0.06);
-      const calloutInset = this.hud && this.hud.tutorialSteps ? Math.min(104, h * 0.14) : 0;
+      const calloutInset = this.hud ? this.hud.calloutHeight() : 0;
       this.world.relayout(w, h, Math.max(6, w * 0.02), hudInset + calloutInset);
       this.renderer.drawBoard(this.world);
     }
@@ -271,7 +273,7 @@ export class Game {
     const showRoute = world.director.phase === PHASE.BUILD || this.paused;
     this.renderer.render(world, realDt, alpha, showRoute);
     this.hud.update(world, this);
-    this.hud.updateTutorial(world, this);
+    if (this.hud.updateTutorial(world, this)) this.resize();
     this.renderer.app.render();
 
     if (this.mode === MODE.PLAYING && world.result !== RESULT.PLAYING) this.finishLevel();

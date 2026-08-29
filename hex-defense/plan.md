@@ -367,7 +367,7 @@ Late waves therefore *literally look* more chaotic and overloaded than early one
 which is the emotional arc the reference screenshots are selling.
 
 **Quality tiers.** Probe frame time over the first ~3 s, pick High / Medium / Low, and
-degrade in this order: shockwave count → bloom resolution → particle cap → bloom off
+degrade in this order: shockwave count → blur width → particle cap → bloom off
 entirely (the drawn halos keep the look alive without it). Manual override in settings.
 
 ---

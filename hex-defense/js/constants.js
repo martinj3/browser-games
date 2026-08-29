@@ -54,10 +54,13 @@ export const MAX_SHAKE = 22;
 export const INTENSITY_DECAY = 1.6;      // how fast the global "carnage" value falls
 export const INTENSITY_MAX = 1;
 
+// Tiers never touch filter resolution -- see postfx.js. They trade blur width,
+// blur passes, particle count and screen-warping effects instead, so the board
+// stays pixel-crisp on every device.
 export const QUALITY = {
-  HIGH:   { particles: 2600, bloomRes: 0.5,  shockwaves: 3, aberration: true },
-  MEDIUM: { particles: 1400, bloomRes: 0.35, shockwaves: 2, aberration: true },
-  LOW:    { particles: 600,  bloomRes: 0,    shockwaves: 0, aberration: false },
+  HIGH:   { particles: 2600, bloom: true,  bloomQuality: 4, bloomPixelSize: 1, shockwaves: 3, aberration: true },
+  MEDIUM: { particles: 1400, bloom: true,  bloomQuality: 2, bloomPixelSize: 2, shockwaves: 2, aberration: true },
+  LOW:    { particles: 600,  bloom: false, bloomQuality: 1, bloomPixelSize: 3, shockwaves: 0, aberration: false },
 };
 
 // --- Palette ----------------------------------------------------------------

@@ -98,7 +98,10 @@ export class Hud {
 
     const building = world.director.phase === PHASE.BUILD;
     e.sendNow.disabled = !building;
-    e.breakTimer.textContent = building ? `(${Math.ceil(world.director.breakTimer)}s +$${world.director.earlySendBonus()})` : '';
+    // Kept terse: the full "SEND NOW (23s +$25)" truncated on a 390px screen.
+    e.breakTimer.textContent = building
+      ? `${Math.ceil(world.director.breakTimer)}s +$${world.director.earlySendBonus()}`
+      : '';
     this.updateIncoming(world);
 
     e.speedBtn.textContent = game.speed + '×';
@@ -172,14 +175,29 @@ export class Hud {
   setTutorial(steps) {
     this.tutorialSteps = steps;
     this.tutorialIndex = 0;
+    this._shownIndex = -1;
+    this._calloutVisible = false;
+    clearTimeout(this._calloutTimer);
     this.el.tutorial.innerHTML = '';
     this.el.tutorial.classList.toggle('hidden', !steps || steps.length === 0);
   }
 
+  /** How much vertical room a visible callout needs right now, in CSS px. */
+  calloutHeight() {
+    const el = this.el.tutorial;
+    if (!this.tutorialSteps || el.classList.contains('hidden')) return 0;
+    return el.offsetHeight + 10;
+  }
+
+  /**
+   * Returns true when the callout appeared or disappeared since the last call,
+   * so the board can refit. Visibility is tracked across frames rather than
+   * within one call, because the auto-dismiss timer fires between frames.
+   */
   updateTutorial(world, game) {
-    if (!this.tutorialSteps) return;
+    if (!this.tutorialSteps) return false;
     const step = this.tutorialSteps[this.tutorialIndex];
-    if (!step) { this.el.tutorial.classList.add('hidden'); return; }
+    if (!step) { this.el.tutorial.classList.add('hidden'); return this._visibilityChanged(); }
     if (this._shownIndex !== this.tutorialIndex) {
       this._shownIndex = this.tutorialIndex;
       this.el.tutorial.innerHTML = '';
@@ -198,6 +216,14 @@ export class Hud {
       clearTimeout(this._calloutTimer);
       if (this.tutorialIndex >= this.tutorialSteps.length) this.el.tutorial.classList.add('hidden');
     }
+    return this._visibilityChanged();
+  }
+
+  _visibilityChanged() {
+    const visible = !this.el.tutorial.classList.contains('hidden');
+    if (visible === this._calloutVisible) return false;
+    this._calloutVisible = visible;
+    return true;
   }
 
   // --- Overlay --------------------------------------------------------------

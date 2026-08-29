@@ -55,8 +55,14 @@ range ring.
   costs nothing per frame and the repo ships no image files at all.
 - **Quality tiers from measurement.** A short frame-time probe picks High/Medium/
   Low and degrades in an order that protects the look: shockwaves first, then
-  bloom resolution, then particle count, and only last does bloom switch off —
-  the baked halos carry the neon on their own.
+  blur width and particle count, and only last does bloom switch off — the baked
+  halos carry the neon on their own. No tier ever lowers the *filter* resolution.
+  Pixi resolves one resolution for a filtered container as the minimum over its
+  filters, and `Filter`'s default is 1 rather than the renderer's — so a filter
+  left alone rasterises the whole world at 1 CSS pixel and upscales it to a 2x or
+  3x screen. Every filter here sets `resolution: 'inherit'`; cheap bloom comes
+  from `pixelSize` and blur passes instead. A soft glow still looks deliberate;
+  a pixelated board just looks broken.
 
 Simulation cost with 44 towers and 200 live enemies measures ~0.2 ms per tick,
 about 1% of a frame budget; the rest of the time is drawing.
@@ -93,6 +99,13 @@ nothing and then jumps. Selling refunds half of everything invested.
 Maps are text art (`js/data/levels/*.js`) — `.` buildable, `#` void, `,` walkable
 but not buildable, `A`–`D` portals, `X` exit, `o` damage pad, `p` range/rate pad.
 Each string is one row; odd columns sit half a hex lower.
+
+Map dimensions are not free: the whole board is fitted on screen with no panning,
+so a map whose aspect ratio is far from the device's leaves dead black margins,
+and one with too many columns makes the hexes untappable. 9x13 and 11x15 are the
+sizes that fill a modern phone while keeping hexes big enough; `tools/test.mjs`
+asserts both properties against real device profiles, including the smallest
+supported one.
 
 Enemy health comes from a curve, so wave tables only specify *composition*:
 `hp = type.hp × BASE_HP × LEVEL_HP_SCALE[level] × WAVE_HP_GROWTH^wave`.

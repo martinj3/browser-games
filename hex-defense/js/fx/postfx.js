@@ -12,7 +12,13 @@ export class PostFX {
     this.filters = [];
     this.shockwaves = [];
 
-    if (quality.bloomRes > 0) {
+    // Pixi resolves ONE resolution for the whole filtered container, as the
+    // minimum over its enabled filters -- and Filter's default is 1, not the
+    // renderer's. Left alone that rasterises the entire world at 1 CSS pixel
+    // and upscales it to a 2x or 3x screen, which reads as heavy pixelation.
+    // Every filter here must therefore say 'inherit'.
+
+    if (quality.bloom) {
       this.bloom = new AdvancedBloomFilter({
         // A high threshold on purpose: only the hot cores bloom, so towers and
         // enemies keep their colour instead of clipping to white.
@@ -20,11 +26,14 @@ export class PostFX {
         bloomScale: 0.85,
         brightness: 1.0,
         blur: 7,
-        quality: 4,
+        quality: quality.bloomQuality,
+        // Widen the blur's sample step instead of shrinking the render target.
+        // This is the cheap knob: it costs the same as pixelSize 1 but reaches
+        // further, so a low tier gets a softer glow rather than a coarser world.
+        pixelSize: { x: quality.bloomPixelSize, y: quality.bloomPixelSize },
       });
-      // Full-resolution bloom at DPR 3 is the single most likely thing to melt a
-      // phone, so it renders at a fraction of the screen size and gets scaled up.
-      this.bloom.resolution = quality.bloomRes;
+      this.bloom.resolution = 'inherit';
+      this.bloom.antialias = 'inherit';
       this.filters.push(this.bloom);
     }
 
@@ -35,12 +44,16 @@ export class PostFX {
       });
       sw.enabled = false;
       sw.time = 0;
+      sw.resolution = 'inherit';
+      sw.antialias = 'inherit';
       this.shockwaves.push(sw);
       this.filters.push(sw);
     }
 
     if (quality.aberration) {
       this.rgb = new RGBSplitFilter();
+      this.rgb.resolution = 'inherit';
+      this.rgb.antialias = 'inherit';
       this.rgb.red = { x: 0, y: 0 };
       this.rgb.green = { x: 0, y: 0 };
       this.rgb.blue = { x: 0, y: 0 };
@@ -87,9 +100,11 @@ export class PostFX {
 
 /**
  * Pick a quality tier from a short frame-time probe. Degrading is ordered so the
- * look survives: shockwaves go first, then bloom resolution, then particles, and
+ * look survives: shockwaves go first, then blur width and particle count, and
  * only last does bloom switch off entirely -- the baked halos carry the neon
- * look on their own even with no post-processing at all.
+ * look on their own even with no post-processing at all. Crucially, no tier
+ * ever lowers the filter resolution: a soft glow still looks intentional, a
+ * pixelated board just looks broken.
  */
 export function pickQuality(sampleMs, tiers) {
   if (sampleMs > 26) return tiers.LOW;

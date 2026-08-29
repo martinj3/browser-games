@@ -172,9 +172,47 @@ test('levels: every map is well-formed and solvable', () => {
       }
     }
     for (const t of level.towers) assert.ok(TOWER_BY_ID[t], `${level.id}: unknown tower ${t}`);
-    // Every level must still be readable on a phone.
-    const size = g.layout(390, 620);
-    assert.ok(size * 2 >= 42, `${level.id}: hexes are only ${(size * 2).toFixed(0)}px wide`);
+  }
+});
+
+test('levels: hexes stay tappable across the supported phone range', () => {
+  // Stage height is the viewport minus the dock and the safe areas. These are
+  // measured against real devices rather than a made-up viewport, because the
+  // constraint is genuinely device-dependent: an 11-column board on a 375px
+  // screen is capped at ~42px wide by geometry alone, no matter how the rows
+  // are chosen, so a flat "44px everywhere" rule is unsatisfiable.
+  const DEVICES = [
+    { name: 'iPhone SE', w: 375, h: 667 - 111 - 20, floor: 34 },
+    { name: 'iPhone 15', w: 390, h: 844 - 111 - 40, floor: 44 },
+    { name: 'tall Android', w: 412, h: 915 - 111 - 30, floor: 44 },
+  ];
+  for (const level of LEVELS) {
+    for (const d of DEVICES) {
+      const g = Grid.fromMap(level.map);
+      const hexWidth = g.layout(d.w, d.h, 8, 46) * 2;
+      assert.ok(hexWidth >= d.floor,
+        `${level.id} on ${d.name}: hexes are ${hexWidth.toFixed(0)}px, want >= ${d.floor}px`);
+    }
+  }
+});
+
+test('levels: boards fill a modern phone screen without heavy letterboxing', () => {
+  // The whole board is always fitted on screen with no panning, so a map whose
+  // aspect ratio is far from the device's leaves dead black margins. This is
+  // what made the first build look like it had a thick bezel.
+  const W = 390, H = 844 - 111 - 40, TOP = 46;
+  for (const level of LEVELS) {
+    const g = Grid.fromMap(level.map);
+    const size = g.layout(W, H, 8, TOP);
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for (const c of g.list) {
+      minX = Math.min(minX, c.x); maxX = Math.max(maxX, c.x);
+      minY = Math.min(minY, c.y); maxY = Math.max(maxY, c.y);
+    }
+    const covered = ((maxX - minX) + 2 * size) * ((maxY - minY) + Math.sqrt(3) * size);
+    const wasted = 1 - covered / (W * (H - TOP));
+    assert.ok(wasted < 0.25,
+      `${level.id}: ${(wasted * 100).toFixed(0)}% of the play area is empty margin`);
   }
 });
 
