@@ -102,7 +102,8 @@ flat armour, since the armour floor scales with the per-shot damage.
 
 ## Levels
 
-1. **Onramp** — open, one portal, tutorial callouts.
+1. **Onramp** — open, one portal, tutorial callouts (dismiss with their ✕, by
+   doing what they suggest, or by waiting them out).
 2. **Bottleneck** — void cells make the chokepoints; long lanes for the Laser.
 3. **Fork** — two portals alternating by wave, converging on one exit. Flyers.
 4. **Serpentine** — walls force a long switchback; a placement puzzle. Armour.

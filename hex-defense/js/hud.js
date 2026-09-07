@@ -8,6 +8,9 @@ import { PHASE } from './wave.js';
 
 const $ = (id) => document.getElementById(id);
 
+/** How long a tutorial callout stays up if the player does not dismiss it. */
+const CALLOUT_TIMEOUT = 10000;
+
 export class Hud {
   constructor(game) {
     this.game = game;
@@ -226,6 +229,16 @@ export class Hud {
     this.el.tutorial.classList.toggle('hidden', !steps || steps.length === 0);
   }
 
+  /**
+   * Hide the callout currently on screen. The step it belongs to is already
+   * marked as shown, so it stays gone; the next step appears when its own
+   * trigger fires.
+   */
+  dismissCallout() {
+    clearTimeout(this._calloutTimer);
+    this.el.tutorial.classList.add('hidden');
+  }
+
   updateTutorial(world, game) {
     if (!this.tutorialSteps) return;
     const step = this.tutorialSteps[this.tutorialIndex];
@@ -233,15 +246,34 @@ export class Hud {
     if (this._shownIndex !== this.tutorialIndex) {
       this._shownIndex = this.tutorialIndex;
       this.el.tutorial.innerHTML = '';
+
       const div = document.createElement('div');
       div.className = 'callout';
-      div.textContent = step.text;
+      const text = document.createElement('span');
+      text.className = 'callout-text';
+      text.textContent = step.text;
+
+      // Only this button is interactive. The callout body stays inert, because
+      // it floats over the top rows of the board and anything clickable there
+      // silently eats taps meant for the hexes underneath.
+      const close = document.createElement('button');
+      close.className = 'callout-close';
+      close.type = 'button';
+      close.setAttribute('aria-label', 'Dismiss');
+      close.textContent = '\u2715';
+      close.addEventListener('pointerdown', (ev) => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        this.dismissCallout();
+      });
+
+      div.append(text, close);
       this.el.tutorial.appendChild(div);
       this.el.tutorial.classList.remove('hidden');
-      // Callouts float over the board rather than displacing it, and never
-      // take pointer events, so they get out of the way on a timer instead.
+      // Callouts also get out of the way on their own, in case the player never
+      // does the thing they suggest and never reaches for the button.
       clearTimeout(this._calloutTimer);
-      this._calloutTimer = setTimeout(() => this.el.tutorial.classList.add('hidden'), 9000);
+      this._calloutTimer = setTimeout(() => this.dismissCallout(), CALLOUT_TIMEOUT);
     }
     if (step.done(world, game)) {
       this.tutorialIndex++;

@@ -178,6 +178,66 @@ if (selTarget) {
   assert(got === selKey, `tapping the tower at ${selKey} selected ${got}`);
 }
 
+// --- Tutorial callouts -------------------------------------------------------
+// The callout floats over the top rows of the board. Its dismiss button must
+// work, and just as importantly the rest of it must stay inert: when the whole
+// callout was made clickable it silently ate taps meant for the hexes beneath.
+const calloutUp = await page.evaluate(() =>
+  !document.getElementById('tutorial').classList.contains('hidden')
+  && !!document.querySelector('.callout'));
+
+// Only the first level carries tutorial callouts, so only there is their
+// absence a bug rather than the expected state.
+if (LEVEL === 0) {
+  assert(calloutUp, 'no tutorial callout on level 1; the checks below would have been skipped');
+}
+if (calloutUp) {
+  // A tap on the callout's body must reach the board underneath it.
+  const passthrough = await page.evaluate(() => {
+    const box = document.querySelector('.callout').getBoundingClientRect();
+    const canvas = document.getElementById('game-canvas').getBoundingClientRect();
+    const closeBox = document.querySelector('.callout-close').getBoundingClientRect();
+    const w = window.game.world;
+    // Find a buildable hex whose centre actually lies under the callout body --
+    // the callout's own midpoint can sit above the first row of the board.
+    for (const c of w.grid.list) {
+      const x = canvas.left + c.x;
+      const y = canvas.top + c.y;
+      if (x < box.left || x > box.right || y < box.top || y > box.bottom) continue;
+      if (x >= closeBox.left && x <= closeBox.right
+        && y >= closeBox.top && y <= closeBox.bottom) continue;   // not the button itself
+      if (w.canPlace('pulse', c)) continue;
+      window.game.armedTower = 'pulse';
+      return { x, y, q: c.q, r: c.r };
+    }
+    return null;
+  });
+  assert(passthrough, 'no buildable hex under the callout; the pass-through check would have been skipped');
+  if (passthrough) {
+    await page.touchscreen.tap(passthrough.x, passthrough.y);
+    await page.waitForTimeout(80);
+    const landed = await page.evaluate(({ q, r }) => {
+      const c = window.game.world.grid.at(q, r);
+      return !!(c && c.tower);
+    }, passthrough);
+    assert(landed, 'a tap on the callout body did not reach the hex underneath it');
+  }
+
+  // The dismiss button closes it, and it stays closed.
+  await page.evaluate(() => { window.game.armedTower = null; });
+  const closeBox = await page.locator('.callout-close').boundingBox();
+  assert(closeBox, 'the callout has no dismiss button');
+  if (closeBox) {
+    await page.touchscreen.tap(closeBox.x + closeBox.width / 2, closeBox.y + closeBox.height / 2);
+    await page.waitForTimeout(120);
+    assert(await page.evaluate(() => document.getElementById('tutorial').classList.contains('hidden')),
+      'the callout dismiss button did not close it');
+    await page.waitForTimeout(400);
+    assert(await page.evaluate(() => document.getElementById('tutorial').classList.contains('hidden')),
+      'the dismissed callout came back');
+  }
+}
+
 // --- Leaving a mode ---------------------------------------------------------
 // Every mode needs a way out that is not "tap some unrelated hex". Drive each
 // exit through the DOM the way a player would.

@@ -87,8 +87,12 @@ html, body {
   z-index: 3;
 }
 #tutorial * { pointer-events: none; }
+/* The one exception: the dismiss button. Specificity has to beat the blanket
+   rule above, which is what keeps the rest of the callout inert. */
+#tutorial .callout-close { pointer-events: auto; }
 .callout {
   align-self: center;
+  display: flex; align-items: flex-start; gap: 8px;
   max-width: min(94%, 460px);
   background: rgba(10, 40, 120, 0.86);
   border: 2px solid #4a7dff;
@@ -101,6 +105,23 @@ html, body {
   animation: calloutIn 0.35s ease-out;
 }
 @keyframes calloutIn { from { opacity: 0; transform: translateY(10px); } }
+
+.callout-text { flex: 1 1 auto; min-width: 0; }
+.callout-close {
+  flex: 0 0 auto;
+  /* Deliberately modest: this is the one part of the callout that takes pointer
+     events, so every pixel of it is a pixel of board that cannot be tapped. */
+  min-width: 34px; min-height: 30px;
+  margin: -3px -5px 0 0;
+  padding: 2px 6px;
+  font-size: 14px; line-height: 1;
+  color: #bcd8ff;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(160, 200, 255, 0.5);
+  border-radius: 8px;
+  text-shadow: none;
+}
+.callout-close:active { background: rgba(255, 255, 255, 0.22); }
 
 /* --- Dock --- */
 
