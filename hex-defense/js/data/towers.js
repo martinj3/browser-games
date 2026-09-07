@@ -5,6 +5,10 @@
 // primitives; this file only describes stats and identity.
 //
 // `range` and `minRange` are in whole hexes. Damage is per shot.
+//
+// `short` is the name shown under the palette icon -- the full name does not fit
+// once seven towers share a phone's width -- and `blurb` is the one-line
+// description shown in the dock whenever a tower is armed.
 
 export const TARGETING = {
   FIRST: 'first',       // furthest along the path (lowest distance-to-exit)
@@ -16,12 +20,17 @@ export const TOWERS = [
   {
     id: 'pulse',
     name: 'Pulse Gun',
-    blurb: 'Fast hitscan bolts. Never misses. Cheap enough to build walls out of.',
+    short: 'Pulse',
+    blurb: 'Sprays fast pellets. Short reach, cheap enough to build walls from.',
     cost: 8,
-    primitive: 'hitscanSingle',
-    damage: 6,
-    cooldown: 0.34,
+    // Small, fast, physical pellets rather than an instant hit: at this fire
+    // rate a hitscan tracer read as a second laser beam, which made the two
+    // cheapest towers look identical in play.
+    primitive: 'rapidPellet',
+    damage: 3.5,
+    cooldown: 0.2,
     range: 2,
+    pelletSpeed: 12,      // hexes per second -- fast, but visibly in flight
     targeting: TARGETING.FIRST,
     hitsAir: true,
     color: 0x5cff8f,
@@ -30,7 +39,8 @@ export const TOWERS = [
   {
     id: 'laser',
     name: 'Laser Lance',
-    blurb: 'Instant beam down a straight hex line. Damages every enemy it crosses.',
+    short: 'Laser',
+    blurb: 'Instant beam down a hex line. Hits every enemy it crosses.',
     cost: 30,
     primitive: 'hitscanLine',
     damage: 24,
@@ -44,7 +54,8 @@ export const TOWERS = [
   {
     id: 'resonator',
     name: 'Resonator',
-    blurb: 'Untargeted shockrings hit everything close by. Cannot reach air.',
+    short: 'Thump',
+    blurb: 'Shockrings hit everything close by. Cannot reach air.',
     cost: 20,
     primitive: 'auraPulse',
     damage: 9,
@@ -58,7 +69,8 @@ export const TOWERS = [
   {
     id: 'mortar',
     name: 'Mortar',
-    blurb: 'Arcing splash shells. Blind up close, deadly at distance. Ground only.',
+    short: 'Mortar',
+    blurb: 'Arcing splash shells. Blind up close. Ground only.',
     cost: 45,
     primitive: 'projectileSplash',
     damage: 52,
@@ -75,7 +87,8 @@ export const TOWERS = [
   {
     id: 'tesla',
     name: 'Tesla Coil',
-    blurb: 'Arcs between nearby enemies, weakening with each jump. Shreds swarms.',
+    short: 'Tesla',
+    blurb: 'Arcs between nearby enemies. Shreds swarms.',
     cost: 35,
     primitive: 'chain',
     damage: 17,
@@ -92,7 +105,8 @@ export const TOWERS = [
   {
     id: 'cryo',
     name: 'Cryo Emitter',
-    blurb: 'Barely scratches anything, but slows everything in reach. Force multiplier.',
+    short: 'Cryo',
+    blurb: 'Barely scratches, but slows everything in reach.',
     cost: 25,
     primitive: 'auraPulse',
     damage: 2,
@@ -107,7 +121,8 @@ export const TOWERS = [
   {
     id: 'prism',
     name: 'Prism',
-    blurb: 'Homing multi-shot that ignores armour entirely. Unlocked late.',
+    short: 'Prism',
+    blurb: 'Homing volleys that ignore armour entirely.',
     cost: 90,
     primitive: 'multiHoming',
     damage: 15,

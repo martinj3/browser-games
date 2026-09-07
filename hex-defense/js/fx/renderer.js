@@ -17,7 +17,7 @@ import { PROJ } from '../entities/projectile.js';
 export class Renderer {
   constructor() {
     this.app = new Application();
-    this.transients = [];      // beams, tracers, chains, rings
+    this.transients = [];      // beams, chains, rings, blasts
     this.enemySprites = [];
     this.enemyGlows = [];
     this.towerSprites = [];
@@ -317,6 +317,14 @@ export class Renderer {
         sp.texture = textures.spark;
         sp.rotation = 0;
         sp.scale.set((size * 0.65) / sp.texture.width);
+      } else if (p.kind === PROJ.PELLET) {
+        // A short bright slug stretched along its own travel, so a stream of
+        // them reads as a burst of gunfire rather than one continuous beam.
+        sp.texture = textures.shard;
+        sp.rotation = Math.atan2(p.vy, p.vx);
+        sp.scale.set((size * 0.5) / sp.texture.width);
+        sp.scale.x *= 2.4;
+        sp.tint = 0xffffff;
       } else {
         sp.texture = textures.shard;
         sp.rotation = Math.atan2(p.vy, p.vx);
@@ -350,13 +358,6 @@ export class Renderer {
             g.moveTo(t.x, t.y).lineTo(x2, y2);
             g.stroke({ width: t.width * mult * k, color: mult < 1 ? 0xffffff : t.color, alpha: k * alphaMult });
           }
-          break;
-        }
-        case 'tracer': {
-          g.moveTo(t.x, t.y).lineTo(t.x2, t.y2);
-          g.stroke({ width: 3.2 * k, color: t.color, alpha: k * 0.9 });
-          g.moveTo(t.x, t.y).lineTo(t.x2, t.y2);
-          g.stroke({ width: 1.2 * k, color: 0xffffff, alpha: k });
           break;
         }
         case 'chain': {
@@ -519,9 +520,6 @@ export class Renderer {
     const P = this.particles;
     for (const ev of world.events) {
       switch (ev.type) {
-        case 'tracer':
-          this.transients.push({ kind: 'tracer', x: ev.x1, y: ev.y1, x2: ev.x2, y2: ev.y2, color: ev.color, life: 0.09, maxLife: 0.09 });
-          break;
         case 'beam':
           this.transients.push({ kind: 'beam', x: ev.x, y: ev.y, angle: ev.angle, length: ev.length, width: ev.width, color: ev.color, life: 0.22, maxLife: 0.22 });
           world.addShake(2.5);
@@ -538,12 +536,15 @@ export class Renderer {
             texture: textures.spark, drag: 5,
           });
           break;
-        case 'muzzle':
+        case 'muzzle': {
+          const scale = ev.scale != null ? ev.scale : 1;
           P.emit({
-            x: ev.x, y: ev.y, color: ev.color, size: 0.9, life: 0.14,
-            texture: textures.spark, vx: Math.cos(ev.angle) * 90, vy: Math.sin(ev.angle) * 90, drag: 8,
+            x: ev.x, y: ev.y, color: ev.color, size: 0.9 * scale, life: 0.14 * scale,
+            texture: textures.spark,
+            vx: Math.cos(ev.angle) * 90 * scale, vy: Math.sin(ev.angle) * 90 * scale, drag: 8,
           });
           break;
+        }
         case 'shieldHit':
           this.transients.push({ kind: 'ring', x: ev.x, y: ev.y, r: ev.r * 1.6, color: 0x6fd0ff, life: 0.18, maxLife: 0.18 });
           break;

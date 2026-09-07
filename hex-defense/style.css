@@ -15,8 +15,9 @@
      and every pixel it wastes is a pixel the board does not get. The palette
      and the selection bar share one height so swapping them cannot resize the
      board underneath. */
-  --tray-h: clamp(56px, 8.4vh, 72px);
-  --dock-h: calc(var(--tray-h) + 40px);
+  --tray-h: clamp(62px, 9vh, 78px);
+  --info-h: 32px;
+  --dock-h: calc(var(--tray-h) + var(--info-h) + 38px);
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -153,15 +154,43 @@ button:disabled { opacity: 0.35; }
 .tower-btn {
   position: relative;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0;
-  padding: 2px 4px;
+  padding: 2px 2px;
   background: none; border: 1.5px solid transparent; border-radius: 12px;
-  min-width: 46px; height: 100%;
+  min-width: 44px; height: 100%;
 }
-.tower-btn canvas { width: clamp(30px, 9vw, 44px); height: clamp(30px, 9vw, 44px); }
-.tower-btn .price { font-size: clamp(10px, 3vw, 13px); color: var(--neon); }
+.tower-btn img { width: clamp(26px, 8vw, 38px); height: clamp(26px, 8vw, 38px); }
+/* Name and price are the only way to tell towers apart on a phone, where there
+   is no hover to reveal a tooltip. */
+.tower-btn .label {
+  font-size: clamp(9px, 2.6vw, 11px); color: #9fe4d4; line-height: 1.1;
+  letter-spacing: 0.02em;
+}
+.tower-btn .price { font-size: clamp(9px, 2.7vw, 12px); color: var(--neon); line-height: 1.15; }
 .tower-btn.armed { border-color: var(--neon); background: rgba(0, 70, 60, 0.55); }
 .tower-btn.poor .price { color: #7a5a5a; }
 .tower-btn.poor canvas { opacity: 0.4; }
+
+/* Armed-tower description. Sits above the palette so picking a tower always
+   says what it does, rather than leaving the glyph to speak for itself. */
+#tower-info {
+  flex: 0 0 var(--info-h);
+  display: flex; align-items: center; justify-content: center;
+  padding: 0 8px;
+  font-size: clamp(10px, 2.8vw, 12px);
+  line-height: 1.2;
+  color: #6fa89a;
+  text-align: center;
+  overflow: hidden;
+}
+/* Two lines, because one line of a phone's width cannot hold a tower name and a
+   description that actually says anything. */
+#tower-info p {
+  margin: 0;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+#tower-info b { color: #fff; }
+#tower-info.idle { color: #45705f; }
 
 /* --- Selection bar --- */
 
@@ -232,7 +261,7 @@ body.booting #overlay-title { animation: pulse 1.6s ease-in-out infinite; }
 
 /* Desktop gets a little more room and a hover affordance. */
 @media (min-width: 760px) and (min-height: 620px) {
-  :root { --tray-h: 72px; }
+  :root { --tray-h: 78px; }
   button:hover:not(:disabled) { background: rgba(0, 80, 90, 0.7); }
   #app { max-width: 620px; margin: 0 auto; border-left: 1px solid rgba(92,255,176,0.12); border-right: 1px solid rgba(92,255,176,0.12); }
 }

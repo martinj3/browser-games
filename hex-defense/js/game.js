@@ -91,7 +91,10 @@ export class Game {
     this.mode = MODE.PLAYING;
     this.paused = false;
     this.speedIndex = 0;
-    this.armedTower = level.towers[0];
+    // Deliberately nothing armed: the first tutorial line tells the player to
+    // pick a tower, and pre-arming one made following that instruction toggle
+    // it back off again.
+    this.armedTower = null;
     this.accumulator = 0;
 
     document.body.classList.remove('at-menu');
@@ -133,9 +136,15 @@ export class Game {
 
   // --- Controls -------------------------------------------------------------
 
+  /**
+   * Picking a tower always arms it. It used to toggle, which meant tapping the
+   * tower you already had armed silently disarmed it and building stopped
+   * working for no visible reason. Deselect with Esc, or by tapping a tower
+   * already on the board.
+   */
   armTower(id) {
     if (this.mode !== MODE.PLAYING) return;
-    this.armedTower = this.armedTower === id ? null : id;
+    this.armedTower = id;
     this.deselect();
     this.renderer.ghost = null;
   }
@@ -284,7 +293,7 @@ export class Game {
 /** Level-1 callouts, advanced by watching the actual game state. */
 const TUTORIAL = [
   {
-    text: 'Tap a tower below, then tap a hex to place it. Towers block the path — the longer the maze, the longer enemies stay in range.',
+    text: 'Pick a tower from the tray below — its name and what it does show just above it — then tap a hex to build. Towers block the path, and the longer the maze, the longer enemies stay under fire.',
     done: (w) => w.towers.length >= 1,
   },
   {

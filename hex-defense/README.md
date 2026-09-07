@@ -22,6 +22,10 @@ python3 -m http.server 8000
 
 ## Controls
 
+Every tower shows its name and price under its icon, and arming one puts its
+full name and a one-line description in the dock above the tray — a phone has no
+hover, so a glyph on its own tells a new player nothing.
+
 **Touch** — tap a tower in the dock to arm it, then tap a hex to place. Drag to
 move the placement ghost (it sits above your finger so the target cell stays
 visible); the ghost turns red when a placement would seal the exit, and the
@@ -71,7 +75,7 @@ about 1% of a frame budget; the rest of the time is drawing.
 
 | Tower | Cost | Role | Air? |
 |---|---|---|---|
-| Pulse Gun | $8 | Fast hitscan, never misses. Cheap enough to build walls from. | yes |
+| Pulse Gun | $8 | Sprays fast pellets, never misses. Cheap wall material. | yes |
 | Laser Lance | $30 | Instant beam down a hex line, hits everything on it. | yes |
 | Resonator | $20 | Untargeted shockrings, hits everything close. | **no** |
 | Cryo Emitter | $25 | Almost no damage; slows everything in reach. | yes |
@@ -87,6 +91,12 @@ Pulse Gun spam fall off against Tanks instead of scaling forever.
 Towers go to level 5. Each upgrade multiplies damage and fire rate; range steps
 at levels 3 and 5, because on a discrete grid a smooth range curve mostly does
 nothing and then jumps. Selling refunds half of everything invested.
+
+The Pulse Gun fires real pellets rather than hitting instantly. As a hitscan
+tower it drew a line to its target every shot, which at its fire rate read as a
+second, permanently-on laser beam and made the two cheapest towers look the
+same in play. Its damage per second is unchanged either way, including against
+flat armour, since the armour floor scales with the per-shot damage.
 
 ## Levels
 

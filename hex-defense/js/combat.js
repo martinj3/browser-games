@@ -160,16 +160,17 @@ export function selectTarget(world, tower) {
 // combat systems.
 
 export const PRIMITIVES = {
-  hitscanSingle(world, tower) {
+  /** One small, fast, hard-tracking slug per shot. */
+  rapidPellet(world, tower) {
     const target = selectTarget(world, tower);
     if (!target) return false;
     tower.angle = Math.atan2(target.y - tower.y, target.x - tower.x);
-    applyDamage(world, target, tower.damage);
+    const speedPx = tower.def.pelletSpeed * SQRT3 * world.grid.size;
+    world.spawnProjectile().launchPellet(tower, target, speedPx, tower.damage);
     world.emit({
-      type: 'tracer', x1: tower.x, y1: tower.y, x2: target.x, y2: target.y,
-      color: tower.def.color,
+      type: 'muzzle', x: tower.x, y: tower.y, angle: tower.angle,
+      color: tower.def.color, scale: 0.45,
     });
-    world.emit({ type: 'impact', x: target.x, y: target.y, color: tower.def.color, power: 0.5 });
     tower.recoil = 1;
     return true;
   },
@@ -329,7 +330,8 @@ export function updateProjectile(world, p, dt) {
     return;
   }
 
-  // Homing bolt: steer toward the target, but keep momentum so it curves.
+  // Homing bolt or pellet: steer toward the target, keeping momentum so the
+  // shot curves rather than snapping onto the target.
   p.life -= dt;
   if (p.life <= 0) { p.alive = false; return; }
   let tgt = p.target;
@@ -347,15 +349,23 @@ export function updateProjectile(world, p, dt) {
   if (tgt) {
     const dx = tgt.x - p.x, dy = tgt.y - p.y;
     const len = Math.hypot(dx, dy) || 1;
-    const steer = 9 * dt;
+    // Pellets track much harder than prism bolts: the Pulse Gun is meant to be
+    // reliable, not showy.
+    const steer = (p.kind === PROJ.PELLET ? 26 : 9) * dt;
     p.vx += (dx / len * p.speed - p.vx) * steer;
     p.vy += (dy / len * p.speed - p.vy) * steer;
     const sp = Math.hypot(p.vx, p.vy) || 1;
     p.vx = p.vx / sp * p.speed;
     p.vy = p.vy / sp * p.speed;
-    if (len < world.grid.size * 0.35) {
+    // Give the hit radius a floor of one frame of travel, or a fast pellet can
+    // step straight over a small target between ticks.
+    const hitRadius = Math.max(world.grid.size * 0.35, p.speed * dt * 0.75);
+    if (len < hitRadius) {
       applyDamage(world, tgt, p.damage, p.ignoresArmor);
-      world.emit({ type: 'impact', x: p.x, y: p.y, color: p.color, power: 0.6 });
+      world.emit({
+        type: 'impact', x: p.x, y: p.y, color: p.color,
+        power: p.kind === PROJ.PELLET ? 0.35 : 0.6,
+      });
       p.alive = false;
       return;
     }

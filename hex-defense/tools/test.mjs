@@ -220,8 +220,13 @@ test('data: tower and enemy tables are internally consistent', () => {
   for (const t of TOWERS) {
     assert.ok(t.damage >= 0 && t.cooldown > 0 && t.range > 0, `${t.id}`);
     assert.ok(!t.minRange || t.minRange < t.range, `${t.id}: dead zone swallows the range band`);
-    assert.ok(['hitscanSingle', 'hitscanLine', 'auraPulse', 'projectileSplash', 'chain', 'multiHoming']
+    assert.ok(['rapidPellet', 'hitscanLine', 'auraPulse', 'projectileSplash', 'chain', 'multiHoming']
       .includes(t.primitive), `${t.id}: unknown primitive ${t.primitive}`);
+    // Every tower must be identifiable in the UI without hovering: a short name
+    // that fits under a palette icon, and a blurb that fits the dock's info line.
+    assert.ok(t.short && t.short.length <= 6, `${t.id}: short name "${t.short}" will not fit the palette`);
+    assert.ok(t.name && t.name.length > 0, `${t.id}: missing full name`);
+    assert.ok(t.blurb && t.blurb.length <= 70, `${t.id}: blurb is ${t.blurb.length} chars, too long for the info line`);
   }
   for (const e of ENEMIES) {
     assert.ok(e.hp > 0 && e.speed > 0 && e.radius > 0, `${e.id}`);
@@ -270,6 +275,34 @@ test('world: upgrading raises damage and never exceeds the level cap', () => {
   assert.ok(t.damage > last);
   assert.equal(t.upgradeCost(), Infinity);
   assert.equal(w.upgrade(t), false);
+});
+
+test('world: the Pulse Gun delivers its full damage despite firing projectiles', () => {
+  // It fires real pellets rather than hitting instantly, so its damage now
+  // depends on those pellets actually arriving. Measure delivered damage
+  // against the damage-per-second the stat line promises.
+  const w = new World(LEVELS[0], 0);
+  w.cash = 100000;
+  const spawn = w.grid.spawns[0].cell;
+  // Put a gun next to the spawn and feed it one very tough, very slow target.
+  const beside = w.grid.list.find((c) => w.grid.isBuildable(c) && !w.canPlace('pulse', c)
+    && Math.abs(c.q - spawn.q) <= 1 && Math.abs(c.r - spawn.r) <= 1);
+  const tower = w.place('pulse', beside);
+  assert.ok(tower, 'could not place a gun beside the spawn');
+
+  const e = w.spawnEnemy('grunt', 'A', 0);
+  e.maxHp = e.hp = 1e7;
+  e.def = { ...e.def, speed: 0 };     // hold it in range for the measurement
+
+  const seconds = 4;
+  for (let i = 0; i < 60 * seconds; i++) w.step(TICK);
+  const delivered = e.maxHp - e.hp;
+  const promised = (tower.damage / tower.cooldown) * seconds;
+  // Allow for pellets still in flight at the end and the first shot's travel.
+  assert.ok(delivered > promised * 0.85,
+    `delivered ${delivered.toFixed(0)} damage but the stat line promises ${promised.toFixed(0)}`);
+  assert.ok(delivered <= promised * 1.05,
+    `delivered ${delivered.toFixed(0)} damage, more than the promised ${promised.toFixed(0)}`);
 });
 
 test('world: flyers ignore the maze entirely', () => {

@@ -2,8 +2,9 @@
 // read as stutter on a phone, and the late waves put a lot of these in flight.
 
 export const PROJ = {
-  SHELL: 0,   // mortar: arcs to a point, then splash
-  BOLT: 1,    // prism: homes on a target
+  SHELL: 0,    // mortar: arcs to a point, then splash
+  BOLT: 1,     // prism: homes on a target
+  PELLET: 2,   // pulse gun: a small, very fast slug
 };
 
 export class Projectile {
@@ -24,6 +25,31 @@ export class Projectile {
     this.duration = dist / speedPx;
     this.t = 0;
     this.arc = Math.min(dist * 0.35, 140);
+    return this;
+  }
+
+  /**
+   * A pellet: small, quick, and locked onto its target. It tracks hard enough
+   * that it always connects -- the Pulse Gun's promise is that it never misses
+   * -- but it is a real object in flight rather than an instant hit, so the
+   * cheapest tower reads as a gun rather than a second laser.
+   */
+  launchPellet(tower, target, speedPx, damage) {
+    this.kind = PROJ.PELLET;
+    this.alive = true;
+    this.x = tower.x; this.y = tower.y;
+    this.prevX = this.x; this.prevY = this.y;
+    this.target = target;
+    this.damage = damage;
+    this.ignoresArmor = false;
+    this.speed = speedPx;
+    this.color = tower.def.color;
+    this.rainbow = false;
+    this.life = 1.5;
+    const a = Math.atan2(target.y - this.y, target.x - this.x)
+      + (Math.random() - 0.5) * 0.10;   // a touch of spray, purely cosmetic
+    this.vx = Math.cos(a) * speedPx;
+    this.vy = Math.sin(a) * speedPx;
     return this;
   }
 

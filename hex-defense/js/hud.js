@@ -16,6 +16,7 @@ export class Hud {
       wave: $('wave'), cash: $('cash'), sendNow: $('send-now'), breakTimer: $('break-timer'),
       incoming: $('incoming'), palette: $('palette'), selection: $('selection'),
       selIcon: $('sel-icon'), selName: $('sel-name'), selStats: $('sel-stats'), selBlurb: $('sel-blurb'),
+      towerInfo: $('tower-info'), towerInfoName: $('tower-info-name'), towerInfoBlurb: $('tower-info-blurb'),
       upgradeBtn: $('upgrade-btn'), upgradeCost: $('upgrade-cost'),
       sellBtn: $('sell-btn'), sellValue: $('sell-value'),
       speedBtn: $('speed-btn'), pauseBtn: $('pause-btn'),
@@ -63,10 +64,15 @@ export class Hud {
       img.alt = def.name;
       img.style.width = img.style.height = 'clamp(30px, 9vw, 44px)';
       img.style.filter = `drop-shadow(0 0 6px ${hex(def.color)})`;
+      // Name and price under every icon: a new player should not have to guess
+      // what a glyph means, or hover something that has no hover on a phone.
+      const label = document.createElement('span');
+      label.className = 'label';
+      label.textContent = def.short;
       const price = document.createElement('span');
       price.className = 'price';
       price.textContent = '$' + def.cost;
-      btn.append(img, price);
+      btn.append(img, label, price);
       btn.addEventListener('click', () => g.armTower(id));
       this.el.palette.appendChild(btn);
       this.towerButtons.push({ id, def, btn, price });
@@ -111,6 +117,7 @@ export class Hud {
       tb.btn.classList.toggle('armed', game.armedTower === tb.id);
       tb.btn.classList.toggle('poor', world.cash < tb.def.cost);
     }
+    this.updateTowerInfo(game, world);
 
     this.updateSelection(world);
   }
@@ -132,6 +139,31 @@ export class Hud {
       n.textContent = count;
       this.el.incoming.append(img, n);
     }
+  }
+
+  /**
+   * What the armed tower is and what it does. The row keeps its height either
+   * way -- collapsing it would only leave the same gap -- so when nothing is
+   * armed it carries a hint instead of sitting blank.
+   */
+  updateTowerInfo(game, world) {
+    // The selection bar covers the same ground for an already-placed tower, so
+    // only one of the two is ever up.
+    const def = (game.armedTower && !world.selected) ? TOWER_BY_ID[game.armedTower] : null;
+    const key = def ? def.id : (world.selected ? 'selected' : 'idle');
+    if (this._infoFor === key) return;
+    this._infoFor = key;
+
+    this.el.towerInfo.classList.toggle('idle', !def);
+    if (!def) {
+      this.el.towerInfoName.textContent = '';
+      this.el.towerInfoBlurb.textContent = world.selected
+        ? '' : 'Tap a tower below to build · tap one on the board to upgrade or sell';
+      return;
+    }
+    this.el.towerInfoName.textContent = `${def.name} $${def.cost}`;
+    this.el.towerInfoName.style.color = hex(def.color);
+    this.el.towerInfoBlurb.textContent = ' — ' + def.blurb;
   }
 
   updateSelection(world) {
