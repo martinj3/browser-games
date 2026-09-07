@@ -17,6 +17,7 @@ export class Hud {
       incoming: $('incoming'), palette: $('palette'), selection: $('selection'),
       selIcon: $('sel-icon'), selName: $('sel-name'), selStats: $('sel-stats'), selBlurb: $('sel-blurb'),
       towerInfo: $('tower-info'), towerInfoName: $('tower-info-name'), towerInfoBlurb: $('tower-info-blurb'),
+      modeCancel: $('mode-cancel'),
       upgradeBtn: $('upgrade-btn'), upgradeCost: $('upgrade-cost'),
       sellBtn: $('sell-btn'), sellValue: $('sell-value'),
       speedBtn: $('speed-btn'), pauseBtn: $('pause-btn'),
@@ -35,6 +36,7 @@ export class Hud {
     this.el.sendNow.addEventListener('click', () => g.sendNextWave());
     this.el.speedBtn.addEventListener('click', () => g.cycleSpeed());
     this.el.pauseBtn.addEventListener('click', () => g.togglePause());
+    this.el.modeCancel.addEventListener('click', () => g.cancelMode());
     this.el.upgradeBtn.addEventListener('click', () => g.upgradeSelected());
     this.el.sellBtn.addEventListener('click', () => g.sellSelected());
   }
@@ -150,20 +152,31 @@ export class Hud {
     // The selection bar covers the same ground for an already-placed tower, so
     // only one of the two is ever up.
     const def = (game.armedTower && !world.selected) ? TOWER_BY_ID[game.armedTower] : null;
-    const key = def ? def.id : (world.selected ? 'selected' : 'idle');
+    const sel = world.selected;
+    const key = def ? 'arm:' + def.id : (sel ? 'sel:' + sel.id + ':' + sel.level : 'idle');
     if (this._infoFor === key) return;
     this._infoFor = key;
 
-    this.el.towerInfo.classList.toggle('idle', !def);
-    if (!def) {
+    // The row doubles as the exit for whichever mode is active, so there is one
+    // obvious way out of both instead of having to guess at an empty hex.
+    this.el.modeCancel.classList.toggle('hidden', !def && !sel);
+    this.el.towerInfo.classList.toggle('idle', !def && !sel);
+
+    if (def) {
+      this.el.towerInfoName.textContent = `${def.name} $${def.cost}`;
+      this.el.towerInfoName.style.color = hex(def.color);
+      this.el.towerInfoBlurb.textContent = ' — ' + def.blurb;
+    } else if (sel) {
+      this.el.towerInfoName.textContent = `${sel.def.name} Lv ${sel.level}`;
+      this.el.towerInfoName.style.color = hex(sel.def.color);
+      this.el.towerInfoBlurb.textContent = sel.maxed
+        ? ' — fully upgraded; sell below, or ✕ to close'
+        : ' — upgrade or sell below, or ✕ to close';
+    } else {
       this.el.towerInfoName.textContent = '';
-      this.el.towerInfoBlurb.textContent = world.selected
-        ? '' : 'Tap a tower below to build · tap one on the board to upgrade or sell';
-      return;
+      this.el.towerInfoBlurb.textContent =
+        'Tap a tower below to build · tap one on the board to upgrade or sell';
     }
-    this.el.towerInfoName.textContent = `${def.name} $${def.cost}`;
-    this.el.towerInfoName.style.color = hex(def.color);
-    this.el.towerInfoBlurb.textContent = ' — ' + def.blurb;
   }
 
   updateSelection(world) {

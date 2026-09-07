@@ -26,12 +26,14 @@ Every tower shows its name and price under its icon, and arming one puts its
 full name and a one-line description in the dock above the tray — a phone has no
 hover, so a glyph on its own tells a new player nothing.
 
-**Touch** — tap a tower in the dock to arm it, then tap a hex to place. Drag to
-move the placement ghost (it sits above your finger so the target cell stays
-visible); the ghost turns red when a placement would seal the exit, and the
-portals it would cut off pulse red. Tap a placed tower to select it: the dock
-shows its stats with **Upgrade** and **Sell** buttons, and the board shows its
-range ring.
+**Touch** — tap a tower in the dock to arm it, then tap a hex to place. The
+ghost turns red when a placement would seal the exit, and the portals it would
+cut off pulse red. Tap a placed tower to select it: the dock shows its stats
+with **Upgrade** and **Sell** buttons, and the board shows its range ring.
+
+Both of those are modes, and both leave the same way: the **✕** in the mode row
+above the tray exits whichever one is active. Tapping the armed tower's own
+button also puts it away.
 
 **Desktop** — the same, plus `1`–`7` to pick a tower, `Esc` to cancel,
 `Space` to send the next wave, `U` upgrade, `X` sell, `P` pause, `F` fast-forward.

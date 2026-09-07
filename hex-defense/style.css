@@ -16,7 +16,7 @@
      and the selection bar share one height so swapping them cannot resize the
      board underneath. */
   --tray-h: clamp(62px, 9vh, 78px);
-  --info-h: 32px;
+  --info-h: 34px;
   --dock-h: calc(var(--tray-h) + var(--info-h) + 38px);
 }
 
@@ -174,8 +174,8 @@ button:disabled { opacity: 0.35; }
    says what it does, rather than leaving the glyph to speak for itself. */
 #tower-info {
   flex: 0 0 var(--info-h);
-  display: flex; align-items: center; justify-content: center;
-  padding: 0 8px;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 0 6px;
   font-size: clamp(10px, 2.8vw, 12px);
   line-height: 1.2;
   color: #6fa89a;
@@ -185,9 +185,19 @@ button:disabled { opacity: 0.35; }
 /* Two lines, because one line of a phone's width cannot hold a tower name and a
    description that actually says anything. */
 #tower-info p {
-  margin: 0;
+  margin: 0; min-width: 0; flex: 1 1 auto;
   display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
   overflow: hidden;
+}
+
+/* Exits whichever mode is active. Sits in the mode row so build mode and
+   upgrade mode both leave the same way, rather than only by tapping some
+   unrelated hex. */
+#mode-cancel {
+  flex: 0 0 auto;
+  min-width: 42px; min-height: 30px; padding: 2px 8px;
+  font-size: 14px; line-height: 1;
+  color: var(--gold); border-color: rgba(255, 210, 61, 0.45);
 }
 #tower-info b { color: #fff; }
 #tower-info.idle { color: #45705f; }

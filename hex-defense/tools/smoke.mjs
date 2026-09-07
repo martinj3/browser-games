@@ -178,6 +178,46 @@ if (selTarget) {
   assert(got === selKey, `tapping the tower at ${selKey} selected ${got}`);
 }
 
+// --- Leaving a mode ---------------------------------------------------------
+// Every mode needs a way out that is not "tap some unrelated hex". Drive each
+// exit through the DOM the way a player would.
+await page.evaluate(() => { window.game.cancelMode(); });
+await page.waitForTimeout(60);
+
+const paletteBtn = page.locator('.tower-btn').first();
+await paletteBtn.tap();
+await page.waitForTimeout(80);
+assert(await page.evaluate(() => window.game.armedTower !== null), 'tapping a palette button did not arm it');
+await paletteBtn.tap();
+await page.waitForTimeout(80);
+assert(await page.evaluate(() => window.game.armedTower === null),
+  'tapping the armed tower again did not put it away');
+
+// The cancel button clears build mode.
+await paletteBtn.tap();
+await page.waitForTimeout(80);
+assert(await page.evaluate(() => !document.getElementById('mode-cancel').classList.contains('hidden')),
+  'no cancel button appeared while a tower was armed');
+await page.locator('#mode-cancel').tap();
+await page.waitForTimeout(80);
+assert(await page.evaluate(() => window.game.armedTower === null), 'the cancel button did not disarm');
+
+// The same button also closes the upgrade/sell view for a placed tower.
+await page.evaluate(() => {
+  const w = window.game.world;
+  window.game.world.selected = w.towers[0] || null;
+});
+await page.waitForTimeout(80);
+const hadSelection = await page.evaluate(() => !!window.game.world.selected);
+if (hadSelection) {
+  assert(await page.evaluate(() => !document.getElementById('mode-cancel').classList.contains('hidden')),
+    'no cancel button appeared while a placed tower was selected');
+  await page.locator('#mode-cancel').tap();
+  await page.waitForTimeout(80);
+  assert(await page.evaluate(() => window.game.world.selected === null),
+    'the cancel button did not close the selected tower');
+}
+
 // Reset for the wave run.
 await page.evaluate(() => {
   const g = window.game, w = g.world;

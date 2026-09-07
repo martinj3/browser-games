@@ -137,16 +137,22 @@ export class Game {
   // --- Controls -------------------------------------------------------------
 
   /**
-   * Picking a tower always arms it. It used to toggle, which meant tapping the
-   * tower you already had armed silently disarmed it and building stopped
-   * working for no visible reason. Deselect with Esc, or by tapping a tower
-   * already on the board.
+   * Picking a tower arms it; picking the one already armed puts it away.
+   * The toggle is only safe now that levels no longer start pre-armed -- that
+   * combination is what used to make following the opening tutorial line
+   * silently disarm the tower and stop building from working.
    */
   armTower(id) {
     if (this.mode !== MODE.PLAYING) return;
-    this.armedTower = id;
+    this.armedTower = this.armedTower === id ? null : id;
     this.deselect();
     this.renderer.ghost = null;
+  }
+
+  /** Leave whichever mode is active: building with a tower, or inspecting one. */
+  cancelMode() {
+    this.disarm();
+    this.deselect();
   }
 
   disarm() { this.armedTower = null; this.renderer.ghost = null; }
